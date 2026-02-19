@@ -3,7 +3,8 @@
 ## ESTRUCTURA DEL DOCUMENTO
 ### PARTE 1: SISTEMA DE LOGIN
 ### PARTE 2: CRUD DE PRODUCTOS
-### PARTE 3: CAPTURAS DE PANTALLA
+### PARTE 3: API REST (Servicio Web)
+### PARTE 4: CAPTURAS DE PANTALLA
 
 ---
 
@@ -770,7 +771,528 @@ Mostrar la estructura:
 
 ---
 
-# ✅ PARTE 3: CAPTURAS DE PANTALLA RECOMENDADAS
+# ✅ PARTE 3: API REST (SERVICIO WEB)
+
+## 3.1 Controlador API (app/Http/Controllers/Api/ProductoApiController.php)
+
+MOSTRAR COMPLETO - Explicar:
+- index() - Lista todos los productos en JSON
+- show() - Obtiene un producto específico
+- store() - Crea un nuevo producto con validación
+- update() - Actualiza un producto (PUT y PATCH)
+- destroy() - Elimina un producto
+- Manejo de errores con try-catch
+- Respuestas estandarizadas en JSON
+
+```php
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Producto;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+
+class ProductoApiController extends Controller
+{
+    /**
+     * GET /api/productos
+     * Listar todos los productos
+     */
+    public function index()
+    {
+        try {
+            $productos = Producto::orderBy('created_at', 'desc')->get();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Productos obtenidos correctamente',
+                'data' => $productos,
+                'count' => $productos->count()
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener productos',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * GET /api/productos/{id}
+     * Mostrar un producto específico
+     */
+    public function show($id)
+    {
+        try {
+            $producto = Producto::find($id);
+            
+            if (!$producto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto obtenido correctamente',
+                'data' => $producto
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener el producto',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * POST /api/productos
+     * Crear un nuevo producto
+     */
+    public function store(Request $request)
+    {
+        try {
+            $request->validate([
+                'nombre' => 'required|string|max:255',
+                'descripcion' => 'nullable|string',
+                'precio' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'categoria' => 'nullable|string|max:100',
+                'estado' => 'required|in:A,I'
+            ], [
+                'nombre.required' => 'El nombre del producto es obligatorio',
+                'nombre.max' => 'El nombre no puede exceder 255 caracteres',
+                'precio.required' => 'El precio es obligatorio',
+                'precio.numeric' => 'El precio debe ser un número',
+                'precio.min' => 'El precio no puede ser negativo',
+                'stock.required' => 'El stock es obligatorio',
+                'stock.integer' => 'El stock debe ser un número entero',
+                'stock.min' => 'El stock no puede ser negativo',
+                'estado.required' => 'El estado es obligatorio',
+                'estado.in' => 'El estado debe ser A (Activo) o I (Inactivo)'
+            ]);
+
+            $producto = Producto::create([
+                'nombre' => $request->nombre,
+                'descripcion' => $request->descripcion,
+                'precio' => $request->precio,
+                'stock' => $request->stock,
+                'categoria' => $request->categoria,
+                'estado' => $request->estado,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto creado exitosamente',
+                'data' => $producto
+            ], Response::HTTP_CREATED);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear el producto',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * PUT/PATCH /api/productos/{id}
+     * Actualizar un producto
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $producto = Producto::find($id);
+            
+            if (!$producto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $request->validate([
+                'nombre' => 'required|string|max:255',
+                'descripcion' => 'nullable|string',
+                'precio' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'categoria' => 'nullable|string|max:100',
+                'estado' => 'required|in:A,I'
+            ], [
+                'nombre.required' => 'El nombre del producto es obligatorio',
+                'precio.numeric' => 'El precio debe ser un número',
+                'stock.integer' => 'El stock debe ser un número entero',
+                'estado.in' => 'El estado debe ser A o I'
+            ]);
+
+            $producto->update([
+                'nombre' => $request->nombre,
+                'descripcion' => $request->descripcion,
+                'precio' => $request->precio,
+                'stock' => $request->stock,
+                'categoria' => $request->categoria,
+                'estado' => $request->estado,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto actualizado exitosamente',
+                'data' => $producto
+            ], Response::HTTP_OK);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $e->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el producto',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * DELETE /api/productos/{id}
+     * Eliminar un producto
+     */
+    public function destroy($id)
+    {
+        try {
+            $producto = Producto::find($id);
+            
+            if (!$producto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $producto->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Producto eliminado exitosamente',
+                'data' => $producto
+            ], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al eliminar el producto',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+```
+
+---
+
+## 3.2 Rutas API (routes/api.php)
+
+MOSTRAR COMPLETO - Explicar:
+- Prefix /api para todos los endpoints
+- 6 rutas CRUD (GET, POST, GET {id}, PUT {id}, PATCH {id}, DELETE {id})
+- Middleware 'api' aplicado a todos
+
+```php
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ProductoApiController;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+Route::middleware('api')->group(function () {
+    // API de Productos (CRUD RESTful)
+    Route::prefix('productos')->group(function () {
+        Route::get('/', [ProductoApiController::class, 'index'])->name('api.productos.index');
+        Route::post('/', [ProductoApiController::class, 'store'])->name('api.productos.store');
+        Route::get('{id}', [ProductoApiController::class, 'show'])->name('api.productos.show');
+        Route::put('{id}', [ProductoApiController::class, 'update'])->name('api.productos.update');
+        Route::patch('{id}', [ProductoApiController::class, 'update'])->name('api.productos.patch');
+        Route::delete('{id}', [ProductoApiController::class, 'destroy'])->name('api.productos.destroy');
+    });
+});
+```
+
+---
+
+## 3.3 Ejemplos de Requests y Responses
+
+### GET /api/productos (Listar todos)
+
+**Request:**
+```bash
+curl -X GET http://localhost:8000/api/productos \
+  -H "Accept: application/json"
+```
+
+**Response (200 - OK):**
+```json
+{
+  "success": true,
+  "message": "Productos obtenidos correctamente",
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Laptop Dell XPS 15",
+      "descripcion": "Laptop profesional de alta gama...",
+      "precio": "1299.99",
+      "stock": 10,
+      "categoria": "Electrónica",
+      "imagen": "producto-default.jpg",
+      "estado": "A",
+      "created_at": "2026-02-19T00:25:51.000000Z",
+      "updated_at": "2026-02-19T00:25:51.000000Z"
+    },
+    {
+      "id": 2,
+      "nombre": "Mouse Logitech MX Master 3",
+      "descripcion": "Mouse profesional inalámbrico...",
+      "precio": "99.99",
+      "stock": 25,
+      "categoria": "Accesorios",
+      "imagen": "producto-default.jpg",
+      "estado": "A",
+      "created_at": "2026-02-19T00:25:51.000000Z",
+      "updated_at": "2026-02-19T00:25:51.000000Z"
+    }
+  ],
+  "count": 2
+}
+```
+
+---
+
+### POST /api/productos (Crear producto)
+
+**Request:**
+```bash
+curl -X POST http://localhost:8000/api/productos \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "nombre": "Monitor LG 27\" 4K",
+    "descripcion": "Monitor IPS con resolución 4K",
+    "precio": 399.99,
+    "stock": 8,
+    "categoria": "Electrónica",
+    "estado": "A"
+  }'
+```
+
+**Response (201 - Created):**
+```json
+{
+  "success": true,
+  "message": "Producto creado exitosamente",
+  "data": {
+    "nombre": "Monitor LG 27\" 4K",
+    "descripcion": "Monitor IPS con resolución 4K",
+    "precio": "399.99",
+    "stock": 8,
+    "categoria": "Electrónica",
+    "estado": "A",
+    "updated_at": "2026-02-19T00:35:00.000000Z",
+    "created_at": "2026-02-19T00:35:00.000000Z",
+    "id": 9
+  }
+}
+```
+
+**Response (422 - Validation Error):**
+```json
+{
+  "success": false,
+  "message": "Error de validación",
+  "errors": {
+    "nombre": [
+      "El nombre del producto es obligatorio"
+    ],
+    "precio": [
+      "El precio debe ser un número"
+    ]
+  }
+}
+```
+
+---
+
+### GET /api/productos/{id} (Obtener uno)
+
+**Request:**
+```bash
+curl -X GET http://localhost:8000/api/productos/1 \
+  -H "Accept: application/json"
+```
+
+**Response (200 - OK):**
+```json
+{
+  "success": true,
+  "message": "Producto obtenido correctamente",
+  "data": {
+    "id": 1,
+    "nombre": "Laptop Dell XPS 15",
+    "descripcion": "Laptop profesional...",
+    "precio": "1299.99",
+    "stock": 10,
+    "categoria": "Electrónica",
+    "imagen": "producto-default.jpg",
+    "estado": "A",
+    "created_at": "2026-02-19T00:25:51.000000Z",
+    "updated_at": "2026-02-19T00:25:51.000000Z"
+  }
+}
+```
+
+**Response (404 - Not Found):**
+```json
+{
+  "success": false,
+  "message": "Producto no encontrado"
+}
+```
+
+---
+
+### PUT /api/productos/{id} (Actualizar)
+
+**Request:**
+```bash
+curl -X PUT http://localhost:8000/api/productos/9 \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "nombre": "Monitor LG 27\" 4K UltraWide",
+    "descripcion": "Monitor IPS ultrawide con HDR",
+    "precio": 449.99,
+    "stock": 12,
+    "categoria": "Electrónica",
+    "estado": "A"
+  }'
+```
+
+**Response (200 - OK):**
+```json
+{
+  "success": true,
+  "message": "Producto actualizado exitosamente",
+  "data": {
+    "id": 9,
+    "nombre": "Monitor LG 27\" 4K UltraWide",
+    "descripcion": "Monitor IPS ultrawide con HDR",
+    "precio": "449.99",
+    "stock": 12,
+    "categoria": "Electrónica",
+    "estado": "A",
+    "created_at": "2026-02-19T00:35:00.000000Z",
+    "updated_at": "2026-02-19T00:35:15.000000Z"
+  }
+}
+```
+
+---
+
+### DELETE /api/productos/{id} (Eliminar)
+
+**Request:**
+```bash
+curl -X DELETE http://localhost:8000/api/productos/9 \
+  -H "Accept: application/json"
+```
+
+**Response (200 - OK):**
+```json
+{
+  "success": true,
+  "message": "Producto eliminado exitosamente",
+  "data": {
+    "id": 9,
+    "nombre": "Monitor LG 27\" 4K UltraWide",
+    "descripcion": "Monitor IPS ultrawide con HDR",
+    "precio": "449.99",
+    "stock": 12,
+    "categoria": "Electrónica",
+    "estado": "A",
+    "created_at": "2026-02-19T00:35:00.000000Z",
+    "updated_at": "2026-02-19T00:35:15.000000Z"
+  }
+}
+```
+
+---
+
+## 3.4 Tabla de Endpoints
+
+| Método | Endpoint | Descripción | Código HTTP |
+|--------|----------|-------------|------------|
+| GET | `/api/productos` | Listar todos los productos | 200 |
+| POST | `/api/productos` | Crear nuevo producto | 201/422 |
+| GET | `/api/productos/{id}` | Obtener un producto | 200/404 |
+| PUT | `/api/productos/{id}` | Actualizar producto | 200/404/422 |
+| PATCH | `/api/productos/{id}` | Actualizar parcial | 200/404/422 |
+| DELETE | `/api/productos/{id}` | Eliminar producto | 200/404 |
+
+---
+
+## 3.5 Testing con Postman
+
+### Pasos para importar colección Postman:
+
+1. Abre Postman
+2. Click en "Import" en la esquina superior izquierda
+3. Selecciona el archivo `postman_collection.json`
+4. Se importará automáticamente la colección "Productos API - Práctica 4"
+5. Actualiza la variable `base_url` en la colección a `http://localhost:8000`
+6. ¡Prueba todos los endpoints!
+
+### Variables de Entorno:
+
+Crea una variable base_url:
+- **Clave:** `base_url`
+- **Valor:** `http://localhost:8000`
+
+### Respuestas JSON Estandarizadas:
+
+Todos los endpoints retornan un JSON con la siguiente estructura:
+
+```json
+{
+  "success": true/false,
+  "message": "Descripción clara de la operación",
+  "data": { ...producto... },
+  "errors": { ...errores de validación... }
+}
+```
+
+---
+
+# ✅ PARTE 4: CAPTURAS DE PANTALLA RECOMENDADAS
 
 Tomar screenshots de:
 
@@ -817,14 +1339,17 @@ Tomar screenshots de:
 | Modelo Producto | Producto.php | app/Models/ |
 | Middleware | VerifySession.php | app/Http/Middleware/ |
 | Controller Usuario | UsuarioController.php | app/Http/Controllers/ |
-| Controller Producto | ProductoController.php | app/Http/Controllers/ |
-| Rutas | web.php | routes/ |
+| Controller Producto (Web) | ProductoController.php | app/Http/Controllers/ |
+| Controller Producto (API) | ProductoApiController.php | app/Http/Controllers/Api/ |
+| Rutas Web | web.php | routes/ |
+| Rutas API | api.php | routes/ |
 | Bootstrap | app.php | bootstrap/ |
 | Vista Login | login.blade.php | resources/views/auth/ |
 | Vista Index | index.blade.php | resources/views/productos/ |
 | Vista Create | create.blade.php | resources/views/productos/ |
 | Vista Edit | edit.blade.php | resources/views/productos/ |
 | Vista Show | show.blade.php | resources/views/productos/ |
+| Colección Postman | postman_collection.json | root/ |
 
 ---
 
@@ -849,6 +1374,7 @@ Con estos accesos puedes capturar todas las funcionalidades del sistema.
 - **Base de Datos**: MySQL
 - **Autenticación**: Sistema manual con Session
 - **Seguridad**: Middleware personalizado, validación de formularios
+- **API REST**: JSON con respuestas estandarizadas
 
 ## Características Clave
 
@@ -857,21 +1383,73 @@ Con estos accesos puedes capturar todas las funcionalidades del sistema.
    - Middleware personalizado para verificar sesión
    - Validación contra base de datos
 
-2. **CRUD Completo**
-   - Create: Crear nuevos productos
-   - Read: Listar y ver detalles
+2. **CRUD Web Completo**
+   - Create: Crear nuevos productos via formulario
+   - Read: Listar y ver detalles en Blade
    - Update: Editar productos
    - Delete: Eliminar productos
 
-3. **Diseño Responsivo**
+3. **API REST Completo**
+   - GET /api/productos - Listar
+   - POST /api/productos - Crear
+   - GET /api/productos/{id} - Obtener
+   - PUT /api/productos/{id} - Actualizar
+   - PATCH /api/productos/{id} - Actualizar parcial
+   - DELETE /api/productos/{id} - Eliminar
+   - Respuestas estandarizadas en JSON
+   - Validaciones con mensajes personalizados
+   - Manejo de errores con try-catch
+
+4. **Diseño Responsivo**
    - Sidebar colapsable
    - Topbar con información del usuario
    - Tabla responsive
    - Formularios completos
+   - Compatibilidad mobile
 
-4. **Validación**
-   - Validación en lado servidor
+5. **Validación Completa**
+   - Validación en lado servidor (web y API)
    - Mensajes de error personalizados
    - Preservación de datos en formularios
+   - Validación de tipos y rangos
+
+## Pasos para Ejecutar
+
+1. **Clonar/Preparar el proyecto**
+   ```bash
+   cd c:\laragon\www\project-laravel-final
+   ```
+
+2. **Instalar dependencias**
+   ```bash
+   composer install
+   npm install
+   ```
+
+3. **Configurar variables de entorno**
+   ```bash
+   copy .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Ejecutar migraciones y seeders**
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+
+5. **Compilar assets**
+   ```bash
+   npm run build
+   ```
+
+6. **Iniciar servidor**
+   ```bash
+   php artisan serve
+   ```
+
+7. **Acceder a la aplicación**
+   - URL web: http://localhost:8000
+   - URL API: http://localhost:8000/api/productos
+   - Credenciales: admin@example.com / password123
 
 ---

@@ -1,0 +1,198 @@
+{
+  "info": {
+    "_postman_id": "12345678-1234-1234-1234-123456789012",
+    "name": "Productos API - Práctica 4",
+    "description": "API REST CRUD para gestión de productos - Ejercicio Práctica Nro. 4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Listar Todos los Productos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/productos",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos"
+          ]
+        },
+        "description": "Obtiene el listado completo de todos los productos disponibles"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Obtener Producto por ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/productos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "1"
+          ]
+        },
+        "description": "Obtiene los detalles de un producto específico"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Crear Nuevo Producto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Monitor LG 27 4K\",\n  \"descripcion\": \"Monitor IPS 27 pulgadas con resolución 4K\",\n  \"precio\": 399.99,\n  \"stock\": 8,\n  \"categoria\": \"Electrónica\",\n  \"estado\": \"A\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/productos",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos"
+          ]
+        },
+        "description": "Crea un nuevo producto en la base de datos"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Actualizar Producto (PUT - Completo)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Monitor LG 27 4K UltraWide\",\n  \"descripcion\": \"Monitor IPS ultrawide con tecnología HDR\",\n  \"precio\": 449.99,\n  \"stock\": 12,\n  \"categoria\": \"Electrónica\",\n  \"estado\": \"A\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/productos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "1"
+          ]
+        },
+        "description": "Actualiza todos los campos de un producto (PUT)"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Actualizar Producto (PATCH - Parcial)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"precio\": 499.99,\n  \"stock\": 15\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/productos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "1"
+          ]
+        },
+        "description": "Actualiza solo los campos enviados (PATCH)"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Eliminar Producto",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/productos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "productos",
+            "1"
+          ]
+        },
+        "description": "Elimina un producto de la base de datos"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}
